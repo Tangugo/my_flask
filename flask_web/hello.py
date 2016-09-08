@@ -3,10 +3,13 @@
 
 
 from flask import (Flask, request, current_app, g, session, make_response,
-                   redirect, render_template)
+                   redirect, render_template, url_for, flash)
 from werkzeug.routing import BaseConverter
 from flask.ext.script import Manager
 from flask.ext.bootstrap import Bootstrap
+from flask.ext.wtf import Form
+from wtforms import StringField, SubmitField
+from wtforms.validators import Required, ValidationError, Regexp
 from livereload import Server
 
 
@@ -26,27 +29,23 @@ class Listconverter(BaseConverter):
 
 app = Flask(__name__)
 app.config['DEBUG'] = True
+app.config['SECRET_KEY'] = 'hard to guess string'
 app.url_map.converters['regex'] = RegexConverter
 app.url_map.converters['list'] = Listconverter
 bootstrap = Bootstrap(app)
 manager = Manager(app)
 
 
-@app.route('/')
+@app.route('/', methods=['GET', 'POST'])
 def index():
-    #  user_agent = request.headers.get('User-Agent')
-    #  print dir(current_app)
-    #  print '\n'
-    #  print dir(g)
-    #  print '\n'
-    #  print dir(session)
-    #  return '<p>{0}</p>'.format(dir(request))
-    #  return '<h1> Hello Flask! </h1>'
-    #  return redirect('https://www.baidu.com')
-    #  response = make_response(('<h1>This document carries a cookie!</h1>'))
-    #  response.set_cookie('answer', '42')
-    #  return response
-    return render_template('index.html')
+    form = NameForm()
+    if form.validate_on_submit():
+        old_name = session.get('name')
+        if old_name is not None and old_name != form.name.data:
+            flash('Looks like you have changed your name!')
+        session['name'] = form.name.data
+        return redirect(url_for('index'))
+    return render_template('index.html', form=form, name=session.get('name'))
 
 @app.route('/user/<name>')
 def user(name):
@@ -85,6 +84,18 @@ def dev():
     live_server = Server(app.wsgi_app)
     live_server.watch("**/*.*")
     live_server.serve(open_url=True)
+
+
+def check_char_len(form, field):
+    if field.data[0].isdigit():
+        raise ValidationError('must char!')
+    else:
+        if len(field.data) < 8:
+            raise ValidationError('char length must larget 8')
+
+class NameForm(Form):
+    name = StringField("What's your name?", validators=[Required(), check_char_len])
+    sbumit = SubmitField('Submit')
 
 
 if __name__ == '__main__':

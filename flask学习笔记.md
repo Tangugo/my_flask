@@ -75,7 +75,7 @@ if __name__ == '__main__':
 								   模板
 							视图函数引擎(jinja2)
 									|(渲染)
-								  HTML
+								   HTML
 
 #### 1、模板中常用的过滤器
 | 过滤器名 | 说明 |
@@ -119,3 +119,44 @@ def utility_processor():
 # 在模板中使用
 {{ format_price(0.33) }}
 ```
+
+
+### 四、表单
+安装flask表单插件
+> pip install flask-wtf
+
+
+#### 1、表单中常用的验证函数：
+| 验证函数 | 说明 |
+|--------|--------|
+|    Email    |    验证电子邮件地址    |
+|	EqualTo	|	比较两个字段的值；常用于要求输入两次密码进行确认的情况|
+|	IPAddress	|	验证ipv4地址	|
+|	Length	|	验证输入字符串的长度	|
+|	NumberRange	|	验证输入值在数字范围	|
+|	Optional	|	无输入值时跳过其他验证函数	|
+|	Regexp	|	使用正则表达式验证输入值	|
+|	URL	|	验证url	|
+|	AnyOf	|	确保输入值再可选值列表中	|
+|	NoneOf	|	确保输入值不在可选值列表中	|
+
+
+#### 2、自定义验证函数
+比如我想以下表单中name字段值中第一个字母不能是数字（当然可以用正则表达式来实现，此处只为演示如何自定义验证函数）
+
+``` python
+from flask.ext.wtf import Form
+from wtforms import StringField
+from wtforms.validators import Required, ValidationError
+
+def check_field_not_digit(form, field):
+	if field.data[0].isdigit():
+		raise ValidationError('word first letter not number!')
+
+class NameForm(Form):
+	name = StringField("What's your name?", validators=[Required(), check_field_not_digit])
+```
+
+参考：[http://wtforms.simplecodes.com/docs/0.6.2/validators.html#custom-validators](http://wtforms.simplecodes.com/docs/0.6.2/validators.html#custom-validators)
+亦可查看源码(源码在你的flask-wtf安装路径下)，观摩内置的验证函数是怎么实现的
+> ~/.virtualenvs/flask/lib/python2.7/site-packages/wtforms/validators.py
