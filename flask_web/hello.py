@@ -12,7 +12,7 @@ from flask.ext.bootstrap import Bootstrap
 from flask.ext.wtf import Form
 from flask.ext.sqlalchemy import SQLAlchemy
 from flask.ext.migrate import Migrate, MigrateCommand
-from flask.ext.mail import Mail
+from flask.ext.mail import Mail, Message
 from wtforms import StringField, SubmitField, IntegerField
 from wtforms.validators import Required, ValidationError, Regexp
 from livereload import Server
@@ -40,11 +40,14 @@ app.config['SECRET_KEY'] = 'hard to guess string'
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + os.path.join(basedir, 'data.sqlite')
 app.config['SQLALCHEMY_COMMIT_ON_TEARDOWN'] = True
 
-app.config['MAIL_SERVER'] = 'smtp.googlemail.com'
-app.config['MAIL_PORT'] = 587
+app.config['MAIL_SERVER'] = 'smtp.163.com'
+app.config['MAIL_PORT'] = 25
 app.config['MAIL_USER_TLS'] = True
 app.config['MAIL_USERNAME'] = os.environ.get('MAIL_USERNAME')
 app.config['MAIL_PASSWORD'] = os.environ.get('MAIL_PASSWORD')
+app.config['FALSKY_MAIL_SENDER'] = 'luckytanggu@163.com'
+app.config['FLASKY_MAIL_SUBJECT_PREFIX'] = '[Flask]'
+app.config['FLASKY_ADMIN'] = os.environ.get('FLASKY_ADMIN')
 
 app.url_map.converters['regex'] = RegexConverter
 app.url_map.converters['list'] = Listconverter
@@ -66,6 +69,8 @@ def index():
             user = User(username=form.name.data)
             db.session.add(user)
             session['known'] = False
+            if app.config['FALSKY_ADMIN']:
+                send_email(app.config['FLASKY_ADMIN'], 'New User', 'mail/new_user', user=user)
         else:
             session['known'] = True
         session['name'] = form.name.data
@@ -121,6 +126,13 @@ def check_char_len(form, field):
     else:
         if len(field.data) < 8:
             raise ValidationError('char length must larget 8')
+
+def send_email(to, subject, template, **kwargs):
+    msg = Message(app.config['FLASKY_MAIL_SUBJECT_PREFIX'] + subject,
+                  sender=app.config['FLASKY_MAIL_SENDER'], recipients=[to])
+    msg.body = render_template(template + '.txt', **kwargs)
+    msg.html = render_template(template, + '.html', **kwargs)
+    mail.send(msg)
 
 class NameForm(Form):
     name = StringField("What's your name?", validators=[Required()])
