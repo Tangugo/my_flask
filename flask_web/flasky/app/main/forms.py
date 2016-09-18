@@ -10,4 +10,4 @@ from wtforms.validators import Required
 class NameForm(Form):
     name = StringField("What's your name?", validators=[Required()])
 
-    sbumit = SubmitField('Submit')
+    submit = SubmitField('Submit')
