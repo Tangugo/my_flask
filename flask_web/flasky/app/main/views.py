@@ -23,13 +23,13 @@ def index():
             user = User(username=form.name.data)
             db.session.add(user)
             session['known'] = False
-            if os.environ.get('FLASKY_ADMIN'):
-                send_email(os.environ.get('FLASKY_ADMIN'), 'New User', 'mail/new_user', user=user)
+            #  if os.environ.get('FLASKY_ADMIN'):
+            #      send_email(os.environ.get('FLASKY_ADMIN'), 'New User', 'mail/new_user', user=user)
         else:
             session['known'] = True
         session['name'] = form.name.data
         form.name.data = ''
-        return redirect(url_for('.index'))
+        return redirect(url_for('main.index'))
     return render_template('index.html',
                            form=form,
                            name=session.get('name'),

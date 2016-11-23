@@ -141,7 +141,7 @@ def utility_processor():
 |	NoneOf	|	确保输入值不在可选值列表中	|
 
 
-#### 2、自定义验证函数
+#### 2、表单中自定义验证函数
 比如我想以下表单中name字段值中第一个字母不能是数字（当然可以用正则表达式来实现，此处只为演示如何自定义验证函数）
 
 ``` python
@@ -149,14 +149,25 @@ from flask.ext.wtf import Form
 from wtforms import StringField
 from wtforms.validators import Required, ValidationError
 
+# 方法一
 def check_field_not_digit(form, field):
 	if field.data[0].isdigit():
 		raise ValidationError('word first letter not number!')
 
 class NameForm(Form):
 	name = StringField("What's your name?", validators=[Required(), check_field_not_digit])
+
+# 方法二: 表单类中定义了以validate_开头且后面跟字段名的方法
+class NameForm(Form):
+	name = StringField("What's your name?", validators=[Required()])
+
+	def validate_name(self, field):
+		if field.data[0].isdigit():
+			raise ValidationError('word first letter not number!')
 ```
 
 参考：[http://wtforms.simplecodes.com/docs/0.6.2/validators.html#custom-validators](http://wtforms.simplecodes.com/docs/0.6.2/validators.html#custom-validators)
 亦可查看源码(源码在你的flask-wtf安装路径下)，观摩内置的验证函数是怎么实现的
 > ~/.virtualenvs/flask/lib/python2.7/site-packages/wtforms/validators.py
+
+
